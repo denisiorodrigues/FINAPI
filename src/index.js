@@ -5,20 +5,38 @@ const app = express();
 
 app.use(express.json());
 
-const custumers = [];
+const customers = [];
+
+//Middleware
+function verifyIfExistsAccountCPF(request, response, next){
+  const { cpf } = request.headers;
+
+  const customer = customers.find((customer) => customer.cpf === cpf);
+
+  if(!customer){
+    return response.status(400).json({ error: "Customer not found!" });
+  }
+
+  request.customer = customer;
+
+  next();
+}
+
+//Configurando assi, o meddleware, vai ser usado para todas as rotas abaixo dessa configuração
+//app.use(verifyIfExistsAccountCPF);
 
 app.post("/account", (request, response) => {
   const {cpf, name } = request.body;
 
-  const custumerAlreadyExists = custumers.some(
+  const custumerAlreadyExists = customers.some(
     (customer) => customer.cpf === cpf
   );
 
   if(custumerAlreadyExists){
-    return response.status(400).json({ error: "Custumer already exists!" }); 
+    return response.status(400).json({ error: "Customer already exists!" }); 
   }
 
-  custumers.push({
+  customers.push({
     id : uuidv4(),
     name,
     cpf,
@@ -28,16 +46,10 @@ app.post("/account", (request, response) => {
   return response.status(201).send();
 });
 
-app.get("/statement/:cpf", (request, response) => {
-  const { cpf } = request.params;
+app.get("/statement", verifyIfExistsAccountCPF, (request, response) => {
+  const { customer } = request;
 
-  const custumer = custumers.find((custumer) => custumer.cpf === cpf);
-
-  if(!custumer){
-    return response.status(400).json({ error: "Customer not found!" });
-  }
-
-  return response.json(custumer.statement);
+  return response.json(customer.statement);
 });
 
 app.listen(3333);
