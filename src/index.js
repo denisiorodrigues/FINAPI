@@ -5,12 +5,12 @@ const app = express();
 
 app.use(express.json());
 
-const costumers = [];
+const custumers = [];
 
 app.post("/account", (request, response) => {
   const {cpf, name } = request.body;
 
-  const custumerAlreadyExists = costumers.some(
+  const custumerAlreadyExists = custumers.some(
     (customer) => customer.cpf === cpf
   );
 
@@ -18,7 +18,7 @@ app.post("/account", (request, response) => {
     return response.status(400).json({ error: "Custumer already exists!" }); 
   }
 
-  costumers.push({
+  custumers.push({
     id : uuidv4(),
     name,
     cpf,
@@ -28,14 +28,16 @@ app.post("/account", (request, response) => {
   return response.status(201).send();
 });
 
-app.get("/statiment/:cpf", (request, response) => {
+app.get("/statement/:cpf", (request, response) => {
   const { cpf } = request.params;
 
-  const costumer = costumers.find(
-    (costumer) => costumer.cpf === cpf
-  );
+  const custumer = custumers.find((custumer) => custumer.cpf === cpf);
 
-  return response.json(costumer.statement);
+  if(!custumer){
+    return response.status(400).json({ error: "Customer not found!" });
+  }
+
+  return response.json(custumer.statement);
 });
 
 app.listen(3333);
